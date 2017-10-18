@@ -1,0 +1,41 @@
+INT ErrorCheck1=0
+INT ErrorCheck2=0
+INT Lgth=0
+STRING ActSurf=''
+INT count = 0
+FOREACH m in folder('model') {
+    $count = $count + number_selected(m.Components)
+}
+   
+// MESSAGE INFO "There are " + $count + " surfaces selected."
+    
+if $count > 0 {
+	ECHO OFF DCPDEBUG UNTRACE COMMAND ACCEPT //Important to suppress useless line in the Tracefile Log	
+	TRACEFILE OPEN "c:\Temp\sel_surfs.txt"
+	PRINT SELSURFACE
+	TRACEFILE CLOSE
+	STRING LIST surfs = {}
+	FILE OPEN "c:\Temp\sel_surfs.txt" FOR READ AS "input"
+	FILE READ $surfs FROM "input"
+	FILE CLOSE "input"
+
+	// Get rid of the first element as it is the count
+	int n = remove_first(surfs)
+
+	FOREACH surf IN surfs {
+
+		$ErrorCheck1=position($surf,"Process Command") // look for error sign
+		$ErrorCheck2=position($surf,"There are") // look for error sign
+		$Lgth=length($surf)
+	    IF $ErrorCheck1 >= 0 OR $ErrorCheck2 >= 0 OR $Lgth==1 {
+		    PRINT "Error command $surf"
+	    } ELSE {
+		    $ActSurf=RTRIM($surf) // Suppress the CR at the end of the line
+		    EDIT MODEL ALL DESELECT ALL
+		    EDIT MODEL ALL SELECT $ActSurf
+		    // Do what you want
+	    }
+	}
+} ELSE {
+	MESSAGE WARN "No surfaces found"
+}
